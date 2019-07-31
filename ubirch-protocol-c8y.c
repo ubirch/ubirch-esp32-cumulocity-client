@@ -21,7 +21,7 @@
 #include "../cjson/include/cjson/cJSON.h" //TODO
 
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 static const char *TAG = "C8Y";
 
