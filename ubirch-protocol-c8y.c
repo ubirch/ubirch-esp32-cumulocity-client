@@ -7,25 +7,28 @@
 #include <sys/stat.h>
 
 #include <esp_log.h>
-#include <util.h>
 #include <esp_http_client.h>
 #include <soc/rtc_wdt.h>
 #include <storage.h>
 #include <freertos/event_groups.h>
 #include <networking.h>
+//#include <cJSON.h>
 #include "mbedtls/base64.h"
-
-#include "../../components/cjson/include/cjson/cJSON.h"
-#include "../../components/cjson/include/cjson/cJSON_Utils.h"
 
 #include "settings.h"
 #include "ubirch-protocol-c8y.h"
+#include "../../main/util.h"
+#include "../cjson/include/cjson/cJSON.h" //TODO
+
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 static const char *TAG = "C8Y";
 
 extern unsigned char UUID[16];
+
+char *hw_uuid = NULL;
+
 
 
 /*!
@@ -487,7 +490,7 @@ static esp_err_t c8y_bootstrap_post(const char *url, const char *data, c8y_respo
  */
 void c8y_bootstrap() {
 	ESP_LOGD(__func__, "");
-	char *uuid = get_hw_ID_string();
+//	char *uuid = get_hw_ID_string();
 	char url[70];  //todo can be improved, by making it dynamic
 	strcpy(url, "https://"); // 8 char
 	strcat(url, HOST); // 25 char
@@ -497,9 +500,9 @@ void c8y_bootstrap() {
 	while (c8y_status.bootstrapped == false) {
 		ESP_LOGI("C8Y", "device has no credentials yet");
 		c8y_response *response = c8y_response_new(160);
-		c8y_bootstrap_post(url, uuid, response);
+		c8y_bootstrap_post(url, hw_uuid, response);
 		c8y_response_free(response);
-		free(uuid);
+//		free(uuid);
 		vTaskDelay(pdMS_TO_TICKS(3000));
 	}
 }
@@ -608,14 +611,14 @@ esp_err_t c8y_registered_get(const char *url, const char *authorization, c8y_res
  */
 esp_err_t c8y_registered() {
 	ESP_LOGD(__func__, "");
-	char *uuid = get_hw_ID_string();
+//	char *uuid = get_hw_ID_string();
 	char url[108];
 	strcpy(url, "https://"); // 8 char
 	strcat(url, TENANT); // 6 char
 	strcat(url, ".cumulocity.com"); // 15 char
 	strcat(url, "/identity/externalIds/c8y_Serial/"); // 33 char
-	strcat(url, uuid); // 37 char
-	free(uuid);
+	strcat(url, hw_uuid); // 37 char
+//	free(uuid);
 
 	// get the authorization token
 	char *authorization = NULL;
@@ -776,7 +779,7 @@ esp_err_t c8y_create_post(const char *url, const char *uuid, const char *authori
  */
 void c8y_create() {
 	ESP_LOGD(__func__, "");
-	char *uuid = get_hw_ID_string();
+//	char *uuid = get_hw_ID_string();
 	char url[64];
 	strcpy(url, "https://"); // 8 char
 	strcat(url, TENANT); // 6 char
@@ -787,10 +790,10 @@ void c8y_create() {
 	c8y_get_authorization(&authorization);
 
 	c8y_response *response = c8y_response_new(160);
-	esp_err_t err = c8y_create_post(url, uuid, authorization, response);
+	esp_err_t err = c8y_create_post(url, hw_uuid, authorization, response);
 	c8y_response_free(response);
 	free(authorization);
-	free(uuid);
+//	free(uuid);
 	vTaskDelay(pdMS_TO_TICKS(3000));
 }
 
@@ -904,7 +907,7 @@ esp_err_t c8y_register_post(const char *url, const char *uuid, const char *autho
  */
 void c8y_register(void) {
 	ESP_LOGD(__func__, "");
-	char *uuid = get_hw_ID_string();
+//	char *uuid = get_hw_ID_string();
 	char url[77];
 	strcpy(url, "https://"); // 8 char
 	strcat(url, TENANT); // 6 char
@@ -917,10 +920,10 @@ void c8y_register(void) {
 	c8y_get_authorization(&authorization);
 
 	c8y_response *response = c8y_response_new(160);
-	esp_err_t err = c8y_register_post(url, uuid, authorization, response);
+	esp_err_t err = c8y_register_post(url, hw_uuid, authorization, response);
 	c8y_response_free(response);
 	free(authorization);
-	free(uuid);
+	free(hw_uuid);
 	vTaskDelay(pdMS_TO_TICKS(3000));
 }
 
@@ -1087,7 +1090,6 @@ esp_err_t c8y_measurement(time_t timestamp, float temperature, float humidity) {
 	return err;
 }
 
-
 // todo change the name
 void c8y_start(void) {
 	ESP_LOGD(__func__, "");
@@ -1103,9 +1105,9 @@ void c8y_start(void) {
 	}
 // todo make the bootstrap automatic
 
-	char * uuid = get_hw_ID_string();
-	c8y_http_client_init(uuid);
-	free(uuid);
+	hw_uuid = get_hw_ID_string();
+	c8y_http_client_init(hw_uuid);
+//	free(hw_uuid);
 	c8y_bootstrap();
 	if (c8y_registered() != ESP_OK) {
 		c8y_create();
