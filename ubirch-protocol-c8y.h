@@ -94,7 +94,7 @@ inline void ubirch_protocol_c8y_init(ubirch_protocol_c8y *proto,
 	proto->version = variant;
 	proto->type = data_type;
 	memcpy(proto->uuid, uuid, UBIRCH_PROTOCOL_UUID_SIZE);
-	proto->status = UBIRCH_PROTOCOL_INITIALIZED;
+//	proto->status = UBIRCH_PROTOCOL_INITIALIZED;
 }
 
 
